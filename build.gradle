@@ -1,0 +1,47 @@
+import java.nio.file.Path
+
+plugins {
+    id 'java'
+    id 'java-library'
+    id 'war'
+    id 'com.bmuschko.cargo' version '2.6.1' apply false
+}
+
+project(':java-library') {
+    apply plugin: 'java-library'
+}
+project(':war-file') {
+    repositories {
+        jcenter()
+    }
+    apply plugin: 'java-library'
+    apply plugin: 'war'
+    dependencies {
+        providedCompile 'javax.servlet:javax.servlet-api:4.0.1'
+        api project(':java-library')
+    }
+    war {
+    }
+}
+project(':webapp') {
+    repositories {
+        jcenter()
+    }
+    apply plugin: 'java-library'
+    apply plugin: 'com.bmuschko.cargo'
+    cargo {
+        containerId = 'tomcat8x'
+        port = 8888
+        local {
+            installer {
+                installUrl = file("src/main/resources/apache-tomcat-8.5.37.zip").toURI()
+                downloadDir = file("${buildDir}/download")
+                extractDir = file("${buildDir}/extract")
+            }
+        }
+        deployable {
+            file = Path.of(project(':war-file').buildDir.toString(), "libs", "war-file.war")
+            context = "ctx"
+        }
+    }
+}
